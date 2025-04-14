@@ -28,6 +28,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 
     public function onEmailSend(EmailSendEvent $event)
     {
+        $this->logger->info('UnsubscribeTokenSubscriber->onEmailSend');
         $contact = $event->getLead();
         if (!isset($contact['id'])) {
             return;
@@ -42,19 +43,30 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         $fields = $matches[1] ?? [];
 
         foreach ($fields as $field) {
-            if (isset($contact[$field])) {
-                $tokens["{customunsubscribe=$field}"] = $this->router->generate(
-                    'mautic_unsubscribe',
-                    ['id' => $contactId, 'field' => $field],
-                    UrlGeneratorInterface::ABSOLUTE_URL
-                );
-            }
+            $linkTag = sprintf('<a href="%s" mautic:disable-tracking="true">Abbestellen</a>', $this->router->generate(
+                'mautic_unsubscribe',
+                ['id' => $contactId, 'field' => $field],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            ));
+            $tokens["{customunsubscribe=$field}"] = $linkTag;
         }
 
-        // Add hidden tracking pixel/link
-        $tokens['{nhi}'] = '<a href="'.$this->router->generate('hidden_link', ['id' => $contactId], UrlGeneratorInterface::ABSOLUTE_URL).'" style="display:none;font-size:1px;color:transparent;">.</a>';
+        // Add hidden nhi link.
+        $nhiLinkTag = sprintf(
+            '<a href="%s" mautic:disable-tracking="true" style="display:none;font-size:1px;color:transparent;">.</a>',
+            $this->router->generate('hidden_link', ['id' => $contactId], UrlGeneratorInterface::ABSOLUTE_URL)
+        );
+        $tokens['{nhi}'] = $nhiLinkTag;
 
-        $this->logger->info('UnsubscribeTokenSubscriber: Tokens added', $tokens);
+        $logData = json_encode([
+            'fields'    => $fields,
+            'contactId' => $contactId,
+            'tokens'    => $tokens,
+        ], \JSON_PRETTY_PRINT);
+        $this->logger->debug(
+            'UnsubscribeTokenSubscriber:',
+            ['logData' => $logData]
+        );
         $event->addTokens($tokens);
     }
 }
