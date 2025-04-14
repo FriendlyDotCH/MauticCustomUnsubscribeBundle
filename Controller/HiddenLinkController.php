@@ -2,10 +2,10 @@
 
 namespace MauticPlugin\MauticUnsubscribeBundle\Controller;
 
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\RedirectResponse;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class HiddenLinkController extends AbstractController
@@ -20,11 +20,11 @@ class HiddenLinkController extends AbstractController
     public function trackRedirect(Request $request, $id)
     {
         if (!$id) {
-            return new Response("Invalid contact ID.", Response::HTTP_BAD_REQUEST);
+            return new Response('Invalid contact ID.', Response::HTTP_BAD_REQUEST);
         }
 
         // Start session to store redirect tracking
-        $session = $request->getSession();
+        $session   = $request->getSession();
         $timestamp = time();
 
         // Store the timestamp in session
