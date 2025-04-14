@@ -1,0 +1,16 @@
+{
+    "name": "mautic/plugin-unsubscribe",
+    "type": "mautic-plugin",
+    "description": "Plugin for handling unsubscribe actions via a nice URL",
+    "authors": [
+        {
+            "name": "Joey Keller",
+            "email": "me@joeykeller.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "MauticPlugin\\MauticUnsubscribeBundle\\": "."
+        }
+    }
+}
