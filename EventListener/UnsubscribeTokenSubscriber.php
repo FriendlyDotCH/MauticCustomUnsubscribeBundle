@@ -38,31 +38,47 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         $contactId = $contact['id'];
         $tokens    = [];
 
-        // Match tokens like {customunsubscribe=fieldname}
-        preg_match_all('/\{customunsubscribe=([\w]+)\}/', $content, $matches);
-        $fields = $matches[1] ?? [];
+        // $matches[1] = field names (e.g. 'shop')
+        // $matches[2] = text attribute values (e.g. 'My unsubscribe text'), or empty string if not present
+        $matches = [];
+        preg_match_all('/\{customunsubscribe=([\w]+)(?:\s+text="([^"]*)")?\}/', $content, $matches);
 
-        foreach ($fields as $field) {
-            $linkTag = sprintf('<a href="%s" mautic:disable-tracking="true">Abbestellen</a>', $this->router->generate(
-                'mautic_unsubscribe',
-                ['id' => $contactId, 'field' => $field],
-                UrlGeneratorInterface::ABSOLUTE_URL
-            ));
-            $tokens["{customunsubscribe=$field}"] = $linkTag;
-        }
+        $orgToken        = $matches[0][0] ?? '{customunsubscribe=fieldname}';
+        $field           = $matches[1][0] ?? null;
+        $unsubscribeText = $matches[2][0] ?? 'Abbestellen';
+        $unsubscribeText = $unsubscribeText ?: 'Abbestellen';
+
+        $this->logger->debug(
+            'UnsubscribeTokenSubscriber1:',
+            ['logData' => $matches]
+        );
+        $unsubscribeUrl  = $this->router->generate(
+            'mautic_unsubscribe',
+            ['id' => $contactId, 'field' => $field],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+        $tokens[$orgToken] = sprintf(
+            '<a href="%s" mautic:disable-tracking="true">%s</a>',
+            $unsubscribeUrl,
+            $unsubscribeText
+        );
 
         // Add hidden nhi link.
+        $hiddenUrl  = $this->router->generate('hidden_link', ['id' => $contactId], UrlGeneratorInterface::ABSOLUTE_URL);
         $nhiLinkTag = sprintf(
             '<a href="%s" mautic:disable-tracking="true" style="display:none;font-size:1px;color:transparent;">.</a>',
-            $this->router->generate('hidden_link', ['id' => $contactId], UrlGeneratorInterface::ABSOLUTE_URL)
+            $hiddenUrl
         );
         $tokens['{nhi}'] = $nhiLinkTag;
 
         $logData = json_encode([
-            'fields'    => $fields,
-            'contactId' => $contactId,
-            'tokens'    => $tokens,
-        ], \JSON_PRETTY_PRINT);
+            'field'           => $field,
+            'unsubscribeText' => $unsubscribeText,
+            'unsubscribeUrl'  => $unsubscribeUrl,
+            'contactId'       => $contactId,
+            'tokens'          => $tokens,
+        ],
+            \JSON_PRETTY_PRINT);
         $this->logger->debug(
             'UnsubscribeTokenSubscriber:',
             ['logData' => $logData]
