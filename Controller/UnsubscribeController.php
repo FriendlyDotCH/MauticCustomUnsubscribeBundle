@@ -25,7 +25,7 @@ class UnsubscribeController extends AbstractController
         $this->router   = $router;
     }
 
-    public function unsubscribeAction(Request $request, $id, $field)
+    public function unsubscribeAction(Request $request, int $id, string $field): Response
     {
         try {
             // Validate lead existence
