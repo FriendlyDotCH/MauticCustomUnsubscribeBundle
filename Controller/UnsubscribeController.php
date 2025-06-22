@@ -4,6 +4,8 @@ namespace MauticPlugin\MauticUnsubscribeBundle\Controller;
 
 use Doctrine\DBAL\Connection;
 use Mautic\CoreBundle\Model\AuditLogModel;
+use MauticPlugin\MauticUnsubscribeBundle\Integration\CustomUnsubscribeIntegration;
+use MauticPlugin\MauticUnsubscribeBundle\Service\ConfigService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,21 +15,47 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 class UnsubscribeController extends AbstractController
 {
     private $db;
+
     private $logger;
+
     private $auditLog;
+
     private $router;
 
-    public function __construct(Connection $db, LoggerInterface $logger, AuditLogModel $auditLog, UrlGeneratorInterface $router)
+    private $configService;
+
+    private CustomUnsubscribeIntegration $unsubIntegration;
+
+    public function __construct(Connection $db, LoggerInterface $logger, AuditLogModel $auditLog, UrlGeneratorInterface $router, CustomUnsubscribeIntegration $unsubIntegration, ConfigService $configService)
     {
-        $this->db       = $db;
-        $this->logger   = $logger;
-        $this->auditLog = $auditLog;
-        $this->router   = $router;
+        $this->db               = $db;
+        $this->logger           = $logger;
+        $this->auditLog         = $auditLog;
+        $this->router           = $router;
+        $this->unsubIntegration = $unsubIntegration;
+        $this->configService    = $configService;
     }
 
     public function unsubscribeAction(Request $request, int $id, string $field): Response
     {
+        $isPublished = $this->unsubIntegration?->getIntegrationConfiguration()?->getIsPublished();
+        if (!$isPublished) {
+            return new Response('', Response::HTTP_NOT_FOUND);
+        }
+
+        $this->logger->info('unsubscribeAction');
+
+        /**
+         * @todo Access encrypted configuration without dedicated configService
+         */
+        $confNhiVal        = $this->configService->get('nhi', 3);
+        $confAllowedFields = explode(',', $this->configService->get('allowedFields', ''));
+
         try {
+            if (!in_array($field, $confAllowedFields)) {
+                return new Response('Field not allowed.', Response::HTTP_NOT_FOUND);
+            }
+
             $isPost = $request->isMethod('POST');
 
             // Validate lead existence
@@ -45,7 +73,7 @@ class UnsubscribeController extends AbstractController
             $this->logger->info("Unsubscribe request stored temporarily for Lead ID: $id.");
 
             // ✅ Delay processing by 3 seconds
-            sleep(3);
+            sleep($confNhiVal);
 
             // Check if {nhi} tracking link was clicked within expiry time (10 sec)
             $lastRedirectClick = $session->get("redirect_click_$id");

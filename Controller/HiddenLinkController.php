@@ -2,6 +2,7 @@
 
 namespace MauticPlugin\MauticUnsubscribeBundle\Controller;
 
+use MauticPlugin\MauticUnsubscribeBundle\Integration\CustomUnsubscribeIntegration;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -12,13 +13,22 @@ class HiddenLinkController extends AbstractController
 {
     private $router;
 
-    public function __construct(UrlGeneratorInterface $router)
+    private CustomUnsubscribeIntegration $unsubIntegration;
+
+    public function __construct(UrlGeneratorInterface $router,
+        CustomUnsubscribeIntegration $unsubIntegration)
     {
-        $this->router = $router;
+        $this->router           = $router;
+        $this->unsubIntegration = $unsubIntegration;
     }
 
     public function trackRedirect(Request $request, $id)
     {
+        $isPublished = $this->unsubIntegration?->getIntegrationConfiguration()?->getIsPublished();
+        if (!$isPublished) {
+            return new Response('Invalid contact ID.', Response::HTTP_NOT_FOUND);
+        }
+
         if (!$id) {
             return new Response('Invalid contact ID.', Response::HTTP_BAD_REQUEST);
         }

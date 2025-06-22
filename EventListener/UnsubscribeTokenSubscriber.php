@@ -4,6 +4,7 @@ namespace MauticPlugin\MauticUnsubscribeBundle\EventListener;
 
 use Mautic\EmailBundle\EmailEvents;
 use Mautic\EmailBundle\Event\EmailSendEvent;
+use MauticPlugin\MauticUnsubscribeBundle\Integration\CustomUnsubscribeIntegration;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -13,10 +14,16 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
     private UrlGeneratorInterface $router;
     private LoggerInterface $logger;
 
-    public function __construct(UrlGeneratorInterface $router, LoggerInterface $logger)
-    {
-        $this->router = $router;
-        $this->logger = $logger;
+    private CustomUnsubscribeIntegration $unsubIntegration;
+
+    public function __construct(
+        UrlGeneratorInterface $router,
+        LoggerInterface $logger,
+        CustomUnsubscribeIntegration $unsubIntegration,
+    ) {
+        $this->router           = $router;
+        $this->logger           = $logger;
+        $this->unsubIntegration = $unsubIntegration;
     }
 
     public static function getSubscribedEvents(): array
@@ -29,6 +36,11 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
     public function onEmailSend(EmailSendEvent $event): void
     {
         $this->logger->info('UnsubscribeTokenSubscriber->onEmailSend triggered');
+
+        $isPublished = $this->unsubIntegration?->getIntegrationConfiguration()?->getIsPublished();
+        if (!$isPublished) {
+            return;
+        }
 
         $contact = $event->getLead();
 

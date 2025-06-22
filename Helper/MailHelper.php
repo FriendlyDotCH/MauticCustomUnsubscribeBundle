@@ -1349,17 +1349,6 @@ class MailHelper extends CoreMailHelper
             return $headers;
         }
 
-        /**
-         * @todo Remove this.
-         */
-        /*$listUnsubscribeHeader = $this->getUnsubscribeHeader();
-        if ($listUnsubscribeHeader) {
-            if (empty($headers['List-Unsubscribe'])) {
-                $headers['List-Unsubscribe'] = $listUnsubscribeHeader;
-            }
-            $headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
-        }*/
-
         return $headers;
     }
 

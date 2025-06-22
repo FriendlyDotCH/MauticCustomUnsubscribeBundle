@@ -20,15 +20,4 @@ return [
             ],
         ],
     ],
-    'services' => [
-        'events' => [
-            'mautic.unsubscribe_token_subscriber' => [
-                'class'     => 'MauticPlugin\\MauticUnsubscribeBundle\\EventListener\\UnsubscribeTokenSubscriber',
-                'arguments' => [
-                    'router',
-                    'monolog.logger.mautic',
-                ],
-            ],
-        ],
-    ],
 ];

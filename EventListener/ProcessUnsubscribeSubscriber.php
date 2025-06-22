@@ -7,14 +7,10 @@ use Mautic\EmailBundle\Event\EmailSendEvent;
 use Mautic\EmailBundle\EventListener\ProcessUnsubscribeSubscriber as CoreProcessUnsubscribeSubscriber;
 use Mautic\EmailBundle\MonitoredEmail\Processor\FeedbackLoop;
 use Mautic\EmailBundle\MonitoredEmail\Processor\Unsubscribe;
+use MauticPlugin\MauticUnsubscribeBundle\Integration\CustomUnsubscribeIntegration;
 
 class ProcessUnsubscribeSubscriber extends CoreProcessUnsubscribeSubscriber
 {
-    public function devLog2(string $message): void
-    {
-        file_put_contents('/var/www/html/mylog.txt', date('Y-m-d H:i:s').' '.$message.PHP_EOL, FILE_APPEND);
-    }
-
     public static function getSubscribedEvents(): array
     {
         return [
@@ -26,7 +22,8 @@ class ProcessUnsubscribeSubscriber extends CoreProcessUnsubscribeSubscriber
 
     public function __construct(
         private Unsubscribe $unsubscriber,
-        private FeedbackLoop $looper
+        private FeedbackLoop $looper,
+        private CustomUnsubscribeIntegration $unsubIntegration
     ) {
         parent::__construct($unsubscriber, $looper);
     }
@@ -36,12 +33,13 @@ class ProcessUnsubscribeSubscriber extends CoreProcessUnsubscribeSubscriber
      */
     public function onEmailSend(EmailSendEvent $event): void
     {
-        $this->devLog2('this is from devlog22222222222222 - empty');
-        /**
-         * @todo Disable logic below if custom unsubscribe is enabled
-         */
+        $isPublished = $this->unsubIntegration?->getIntegrationConfiguration()?->getIsPublished();
+        // if published ignore logic below.
+        if ($isPublished) {
+            return;
+        }
 
-        /*$helper = $event->getHelper();
+        $helper = $event->getHelper();
         if ($helper && $unsubscribeEmail = $helper->generateUnsubscribeEmail()) {
             $headers          = $event->getTextHeaders();
             $existing         = $headers['List-Unsubscribe'] ?? '';
@@ -58,6 +56,6 @@ class ProcessUnsubscribeSubscriber extends CoreProcessUnsubscribeSubscriber
             }
 
             $event->addTextHeader('List-Unsubscribe', $updatedHeader);
-        }*/
+        }
     }
 }
