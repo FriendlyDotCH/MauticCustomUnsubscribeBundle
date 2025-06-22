@@ -43,6 +43,11 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         $matches = [];
         preg_match_all('/\{customunsubscribe=([\w]+)(?:\s+text="([^"]*)")?\}/', $content, $matches);
 
+        // Token not found, nothing else to do.
+        if (empty($matches[0])) {
+            return;
+        }
+
         $orgToken        = $matches[0][0] ?? '{customunsubscribe=fieldname}';
         $field           = $matches[1][0] ?? null;
         $unsubscribeText = $matches[2][0] ?? 'Abbestellen';

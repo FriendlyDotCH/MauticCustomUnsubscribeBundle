@@ -28,13 +28,13 @@ class UnsubscribeController extends AbstractController
     public function unsubscribeAction(Request $request, $id, $field)
     {
         try {
-
             // Ignore HEAD requests (likely from evil bots or filters)
             if ($request->isMethod('HEAD')) {
                 $this->logger->info("HEAD request ignored for Lead ID: $id");
+
                 return new Response('HEAD request ignored.', Response::HTTP_OK);
             }
-            
+
             // Validate lead existence
             $lead = $this->db->fetchAssociative('SELECT id FROM leads WHERE id = ?', [$id]);
             if (!$lead) {
