@@ -22,7 +22,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
     public static function getSubscribedEvents(): array
     {
         return [
-            EmailEvents::EMAIL_ON_SEND => ['onEmailSend', 0],
+            EmailEvents::EMAIL_ON_SEND => ['onEmailSend', 255],
         ];
     }
 
@@ -52,16 +52,15 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         $field           = $matches[1][0] ?? null;
         $unsubscribeText = $matches[2][0] ?? 'Abbestellen';
         $unsubscribeText = $unsubscribeText ?: 'Abbestellen';
-
-        $this->logger->debug(
-            'UnsubscribeTokenSubscriber1:',
-            ['logData' => $matches]
-        );
         $unsubscribeUrl  = $this->router->generate(
             'mautic_unsubscribe',
             ['id' => $contactId, 'field' => $field],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
+
+        // $unsubscribeUrlWithEmail = "{$unsubscribeUrl}?email={$contact['email']}";
+        $event->addTextHeader('List-Unsubscribe', sprintf('<%s>', $unsubscribeUrl));
+
         $tokens[$orgToken] = sprintf(
             '<a href="%s" mautic:disable-tracking="true">%s</a>',
             $unsubscribeUrl,
