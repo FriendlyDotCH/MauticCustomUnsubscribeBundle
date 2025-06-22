@@ -1349,13 +1349,16 @@ class MailHelper extends CoreMailHelper
             return $headers;
         }
 
-        $listUnsubscribeHeader = $this->getUnsubscribeHeader();
+        /**
+         * @todo Remove this.
+         */
+        /*$listUnsubscribeHeader = $this->getUnsubscribeHeader();
         if ($listUnsubscribeHeader) {
             if (empty($headers['List-Unsubscribe'])) {
                 $headers['List-Unsubscribe'] = $listUnsubscribeHeader;
             }
             $headers['List-Unsubscribe-Post'] = 'List-Unsubscribe=One-Click';
-        }
+        }*/
 
         return $headers;
     }
@@ -1387,8 +1390,7 @@ class MailHelper extends CoreMailHelper
                 );
             }
 
-            // return "<$url>";
-            return '<rak-rak>';
+            return "<$url>";
         }
 
         if (!empty($this->queuedRecipients) || !empty($this->lead)) {

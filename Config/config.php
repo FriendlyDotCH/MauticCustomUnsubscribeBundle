@@ -9,9 +9,10 @@ return [
     'author'      => 'Joey Keller',
     'routes'      => [
         'public' => [
-            'mautic_unsubscribe' => [
-                'path'       => '/unsubscribe/{id}/{field}',
+            'mautic_custom_unsubscribe' => [
+                'path'       => '/custom-unsubscribe/{id}/{field}',
                 'controller' => 'MauticPlugin\\MauticUnsubscribeBundle\\Controller\\UnsubscribeController::unsubscribeAction',
+                'method'     => 'GET|POST',
             ],
             'hidden_link' => [
                 'path'       => '/nhi/{id}',

@@ -28,12 +28,7 @@ class UnsubscribeController extends AbstractController
     public function unsubscribeAction(Request $request, int $id, string $field): Response
     {
         try {
-            // Ignore HEAD requests (likely from evil bots or filters)
-            if ($request->isMethod('HEAD')) {
-                $this->logger->info("HEAD request ignored for Lead ID: $id");
-
-                return new Response('HEAD request ignored.', Response::HTTP_OK);
-            }
+            $isPost = $request->isMethod('POST');
 
             // Validate lead existence
             $lead = $this->db->fetchAssociative('SELECT id FROM leads WHERE id = ?', [$id]);
@@ -66,10 +61,7 @@ class UnsubscribeController extends AbstractController
             // ✅ Remove {nhi} session after expiry
             $session->remove("redirect_click_$id");
 
-            // ✅ Dynamically update the custom field
             $this->db->executeUpdate("UPDATE leads SET $field = 'DNC' WHERE id = ?", [$id]);
-
-            // Log event
             $this->auditLog->writeToLog([
                 'bundle'    => 'lead',
                 'object'    => 'contact',
@@ -77,13 +69,18 @@ class UnsubscribeController extends AbstractController
                 'action'    => 'update',
                 'details'   => ['Updated '.$field => 'DNC'],
             ]);
-
             $this->logger->info("Successfully unsubscribed Lead ID: $id (Field: $field)");
 
-            // ✅ Redirect to the corresponding landing page
-            $landingPageUrl = '/'.$field;
+            if ($isPost) {
+                // One-Click Unsubscribe
+                $responseContent = "Successfully unsubscribed Lead: $id from topic: $field";
+            } else {
+                // Unsubscribe with link from email body.
+                $landingPageUrl  = sprintf('/%s', $field);
+                $responseContent = "<script>window.location.href = '$landingPageUrl';</script>";
+            }
 
-            return new Response("<script>window.location.href = '$landingPageUrl';</script>");
+            return new Response($responseContent, Response::HTTP_OK);
         } catch (\Exception $e) {
             $this->logger->error("Error updating lead ID $id: ".$e->getMessage());
 

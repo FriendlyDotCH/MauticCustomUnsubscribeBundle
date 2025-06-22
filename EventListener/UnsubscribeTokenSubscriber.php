@@ -10,8 +10,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 {
-    private $router;
-    private $logger;
+    private UrlGeneratorInterface $router;
+    private LoggerInterface $logger;
 
     public function __construct(UrlGeneratorInterface $router, LoggerInterface $logger)
     {
@@ -26,67 +26,72 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         ];
     }
 
-    public function onEmailSend(EmailSendEvent $event)
+    public function onEmailSend(EmailSendEvent $event): void
     {
-        $this->logger->info('UnsubscribeTokenSubscriber->onEmailSend');
+        $this->logger->info('UnsubscribeTokenSubscriber->onEmailSend triggered');
+
         $contact = $event->getLead();
-        if (!isset($contact['id'])) {
+
+        if (!is_array($contact) || empty($contact['id'])) {
             return;
         }
 
-        $content   = $event->getContent();
         $contactId = $contact['id'];
+        $content   = $event->getContent();
         $tokens    = [];
 
-        // $matches[1] = field names (e.g. 'shop')
-        // $matches[2] = text attribute values (e.g. 'My unsubscribe text'), or empty string if not present
         $matches = [];
         preg_match_all('/\{customunsubscribe=([\w]+)(?:\s+text="([^"]*)")?\}/', $content, $matches);
 
-        // Token not found, nothing else to do.
         if (empty($matches[0])) {
             return;
         }
 
-        $orgToken        = $matches[0][0] ?? '{customunsubscribe=fieldname}';
+        $orgToken        = $matches[0][0];
         $field           = $matches[1][0] ?? null;
-        $unsubscribeText = $matches[2][0] ?? 'Abbestellen';
-        $unsubscribeText = $unsubscribeText ?: 'Abbestellen';
-        $unsubscribeUrl  = $this->router->generate(
-            'mautic_unsubscribe',
+        $unsubscribeText = $matches[2][0] ?? '';
+        $unsubscribeText = '' !== trim($unsubscribeText) ? $unsubscribeText : 'Abbestellen';
+
+        // Generate unsubscribe URL
+        $unsubscribeUrl = $this->router->generate(
+            'mautic_custom_unsubscribe',
             ['id' => $contactId, 'field' => $field],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
-        // $unsubscribeUrlWithEmail = "{$unsubscribeUrl}?email={$contact['email']}";
+        // Add List-Unsubscribe header
         $event->addTextHeader('List-Unsubscribe', sprintf('<%s>', $unsubscribeUrl));
+        $event->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
 
+        // Replace token in email content
         $tokens[$orgToken] = sprintf(
             '<a href="%s" mautic:disable-tracking="true">%s</a>',
             $unsubscribeUrl,
             $unsubscribeText
         );
 
-        // Add hidden nhi link.
-        $hiddenUrl  = $this->router->generate('hidden_link', ['id' => $contactId], UrlGeneratorInterface::ABSOLUTE_URL);
-        $nhiLinkTag = sprintf(
+        // Add hidden nhi link
+        $hiddenUrl = $this->router->generate(
+            'hidden_link',
+            ['id' => $contactId],
+            UrlGeneratorInterface::ABSOLUTE_URL
+        );
+
+        $tokens['{nhi}'] = sprintf(
             '<a href="%s" mautic:disable-tracking="true" style="display:none;font-size:1px;color:transparent;">.</a>',
             $hiddenUrl
         );
-        $tokens['{nhi}'] = $nhiLinkTag;
 
-        $logData = json_encode([
+        // Log data for debugging
+        $this->logger->debug('UnsubscribeTokenSubscriber token data', [
             'field'           => $field,
             'unsubscribeText' => $unsubscribeText,
             'unsubscribeUrl'  => $unsubscribeUrl,
             'contactId'       => $contactId,
             'tokens'          => $tokens,
-        ],
-            \JSON_PRETTY_PRINT);
-        $this->logger->debug(
-            'UnsubscribeTokenSubscriber:',
-            ['logData' => $logData]
-        );
+        ]);
+
+        // Apply tokens to the event
         $event->addTokens($tokens);
     }
 }

@@ -28,7 +28,8 @@ class HiddenLinkController extends AbstractController
         $timestamp = time();
 
         // Store the timestamp in session
-        $session->set("redirect_click_$id", $timestamp);
+        $strId = (string) $id;
+        $session->set("redirect_click_$strId", $timestamp);
 
         // ✅ Use relative link instead of hardcoded URL
         $trackedPage = $this->router->generate('tracked_page', [], UrlGeneratorInterface::ABSOLUTE_PATH);
