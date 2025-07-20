@@ -1387,8 +1387,8 @@ class MailHelper extends CoreMailHelper
                 );
             }
 
-            // return "<$url>";
-            return '<rak-rak>';
+            return "<$url>";
+            // return '<rak-rak>';
         }
 
         if (!empty($this->queuedRecipients) || !empty($this->lead)) {

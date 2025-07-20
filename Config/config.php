@@ -9,20 +9,20 @@ return [
     'author'      => 'Joey Keller',
     'routes'      => [
         'public' => [
-            'mautic_unsubscribe' => [
-                'path'       => '/unsubscribe/{id}/{field}',
-                'controller' => 'MauticPlugin\\MauticUnsubscribeBundle\\Controller\\UnsubscribeController::unsubscribeAction',
+            'friendly_unsubscribe' => [
+                'path'       => '/friendly-unsubscribe/{id}/{field}',
+                'controller' => 'MauticPlugin\MauticUnsubscribeBundle\Controller\UnsubscribeController::unsubscribeAction',
             ],
-            'hidden_link' => [
-                'path'       => '/nhi/{id}',
-                'controller' => 'MauticPlugin\\MauticUnsubscribeBundle\\Controller\\HiddenLinkController::trackRedirect',
+            'friendly_hidden_link' => [
+                'path'       => '/friendly-unsubscribe/nhi/{id}',
+                'controller' => 'MauticPlugin\MauticUnsubscribeBundle\Controller\HiddenLinkController::trackRedirectAction',
             ],
         ],
     ],
     'services' => [
         'events' => [
             'mautic.unsubscribe_token_subscriber' => [
-                'class'     => 'MauticPlugin\\MauticUnsubscribeBundle\\EventListener\\UnsubscribeTokenSubscriber',
+                'class'     => MauticPlugin\MauticUnsubscribeBundle\EventListener\UnsubscribeTokenSubscriber::class,
                 'arguments' => [
                     'router',
                     'monolog.logger.mautic',

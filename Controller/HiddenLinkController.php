@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace MauticPlugin\MauticUnsubscribeBundle\Controller;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,7 +19,7 @@ class HiddenLinkController extends AbstractController
         $this->router = $router;
     }
 
-    public function trackRedirect(Request $request, $id)
+    public function trackRedirect(Request $request, int $id): Response
     {
         if (!$id) {
             return new Response('Invalid contact ID.', Response::HTTP_BAD_REQUEST);

@@ -48,7 +48,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         $unsubscribeText = $matches[2][0] ?? 'Abbestellen';
         $unsubscribeText = $unsubscribeText ?: 'Abbestellen';
         $unsubscribeUrl  = $this->router->generate(
-            'mautic_unsubscribe',
+            'friendly_unsubscribe',
             ['id' => $contactId, 'field' => $field],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
@@ -63,7 +63,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         );
 
         // Add hidden nhi link.
-        $hiddenUrl  = $this->router->generate('hidden_link', ['id' => $contactId], UrlGeneratorInterface::ABSOLUTE_URL);
+        $hiddenUrl  = $this->router->generate('friendly_hidden_link', ['id' => $contactId], UrlGeneratorInterface::ABSOLUTE_URL);
         $nhiLinkTag = sprintf(
             '<a href="%s" mautic:disable-tracking="true" style="display:none;font-size:1px;color:transparent;">.</a>',
             $hiddenUrl

@@ -19,4 +19,7 @@ return function (ContainerConfigurator $configurator): void {
         __DIR__.'/../'
     )
         ->exclude('../{'.implode(',', array_merge(MauticCoreExtension::DEFAULT_EXCLUDES, $excludes)).'}');
+
+    $services->set('mautic.integration.friendlyunsubscribe')
+        ->class(MauticPlugin\MauticUnsubscribeBundle\Integration\FriendlyUnsubscribeIntegration::class);
 };
