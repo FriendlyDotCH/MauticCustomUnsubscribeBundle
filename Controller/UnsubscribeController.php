@@ -57,7 +57,7 @@ class UnsubscribeController extends AbstractController
             $expireTime         = $decryptedApiKeys['nhi'];
             $allowedFields      = explode(',', $decryptedApiKeys['fields']);
 
-            if (!in_array($field, $allowedFields)) {
+            if (count($allowedFields) > 0 && !in_array($field, $allowedFields)) {
                 throw new FieldNotAllowedException('Field not allowed to be used as unsubscribe.');
             }
 
