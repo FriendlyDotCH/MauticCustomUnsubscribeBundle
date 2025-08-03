@@ -60,6 +60,18 @@ class ConfigType extends AbstractType
                 return (int) $submittedValue;
             }
         ));
+
+        $builder->add(
+            'fields',
+            TextType::class,
+            [
+                'label'      => 'mautic.friendlyunsubscribe.fields',
+                'label_attr' => ['class' => 'control-label'],
+                'attr'       => ['class' => 'form-control'],
+                'required'   => false,
+                'data'       => $config['fields'] ?? '',
+            ]
+        );
     }
 
     public function configureOptions(OptionsResolver $resolver): void

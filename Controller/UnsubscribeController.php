@@ -7,6 +7,7 @@ namespace MauticPlugin\MauticUnsubscribeBundle\Controller;
 use Doctrine\DBAL\Connection;
 use Mautic\CoreBundle\Model\AuditLogModel;
 use Mautic\IntegrationsBundle\Helper\IntegrationsHelper;
+use MauticPlugin\MauticUnsubscribeBundle\Exception\FieldNotAllowedException;
 use MauticPlugin\MauticUnsubscribeBundle\Exception\PluginNotPublishedException;
 use MauticPlugin\MauticUnsubscribeBundle\Integration\FriendlyUnsubscribeIntegration;
 use Psr\Log\LoggerInterface;
@@ -54,6 +55,11 @@ class UnsubscribeController extends AbstractController
 
             $decryptedApiKeys   = $configuration->getApiKeys();
             $expireTime         = $decryptedApiKeys['nhi'];
+            $allowedFields      = explode(',', $decryptedApiKeys['fields']);
+
+            if (!in_array($field, $allowedFields)) {
+                throw new FieldNotAllowedException('Field not allowed to be used as unsubscribe.');
+            }
 
             // Validate lead existence
             $lead = $this->db->fetchAssociative('SELECT id FROM leads WHERE id = ?', [$id]);
@@ -105,6 +111,8 @@ class UnsubscribeController extends AbstractController
             return new Response("<script>window.location.href = '$landingPageUrl';</script>");
         } catch (PluginNotPublishedException $e) {
             return new Response('Error: '.$e->getMessage(), Response::HTTP_NOT_FOUND);
+        } catch (FieldNotAllowedException $e) {
+            return new Response('Error: '.$e->getMessage(), Response::HTTP_BAD_REQUEST);
         } catch (\Exception $e) {
             $this->logger->error("Error updating lead ID $id: ".$e->getMessage());
 
