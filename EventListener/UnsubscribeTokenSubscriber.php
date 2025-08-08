@@ -4,6 +4,9 @@ namespace MauticPlugin\MauticUnsubscribeBundle\EventListener;
 
 use Mautic\EmailBundle\EmailEvents;
 use Mautic\EmailBundle\Event\EmailSendEvent;
+use Mautic\IntegrationsBundle\Helper\IntegrationsHelper;
+use MauticPlugin\MauticUnsubscribeBundle\Helper\HashHelper;
+use MauticPlugin\MauticUnsubscribeBundle\Integration\FriendlyUnsubscribeIntegration;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
@@ -11,12 +14,23 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 {
     private $router;
+
     private $logger;
 
-    public function __construct(UrlGeneratorInterface $router, LoggerInterface $logger)
-    {
-        $this->router = $router;
-        $this->logger = $logger;
+    private $hashHelper;
+
+    private $integration;
+
+    public function __construct(
+        UrlGeneratorInterface $router,
+        LoggerInterface $logger,
+        HashHelper $hashHelper,
+        IntegrationsHelper $integrationsHelper,
+    ) {
+        $this->router      = $router;
+        $this->logger      = $logger;
+        $this->hashHelper  = $hashHelper;
+        $this->integration = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
     }
 
     public static function getSubscribedEvents(): array
@@ -28,7 +42,13 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 
     public function onEmailSend(EmailSendEvent $event)
     {
+        $config              = $this->integration?->getIntegrationConfiguration();
+        if (!$config || !$config->isPublished()) {
+            return;
+        }
+
         $this->logger->info('UnsubscribeTokenSubscriber->onEmailSend');
+
         $contact = $event->getLead();
         if (!isset($contact['id'])) {
             return;
@@ -38,22 +58,55 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         $contactId = $contact['id'];
         $tokens    = [];
 
-        // $matches[1] = field names (e.g. 'shop')
-        // $matches[2] = text attribute values (e.g. 'My unsubscribe text'), or empty string if not present
         $matches = [];
-        preg_match_all('/\{customunsubscribe=([\w]+)(?:\s+text="([^"]*)")?\}/', $content, $matches);
+        preg_match_all(
+            '/\{(?<full>customunsubscribe=(?<field>[\w_]+)(?:\s+text="(?<text>[^"]*)")?)\}/',
+            $content,
+            $matches,
+            PREG_SET_ORDER
+        );
 
-        $orgToken        = $matches[0][0] ?? '{customunsubscribe=fieldname}';
-        $field           = $matches[1][0] ?? null;
-        $unsubscribeText = $matches[2][0] ?? 'Abbestellen';
-        $unsubscribeText = $unsubscribeText ?: 'Abbestellen';
+        $result = [
+            'orgToken'        => '{customunsubscribe=fieldname text="Abbestellen"}',
+            'field'           => null,
+            'unsubscribeText' => 'Abbestellen',
+        ];
+
+        // Process first match if found
+        if (!empty($matches[0])) {
+            $match              = $matches[0];
+            $result['orgToken'] = '{'.$match['full'].'}';
+            $result['field']    = $match['field'] ?? null;
+
+            if (isset($match['text']) && '' !== $match['text']) {
+                $result['unsubscribeText'] = $match['text'];
+            }
+        }
+
+        $orgToken        = $result['orgToken'];
+        $field           = $result['field'];
+        $unsubscribeText = $result['unsubscribeText'];
         $unsubscribeUrl  = $this->router->generate(
             'friendly_unsubscribe',
             ['id' => $contactId, 'field' => $field],
             UrlGeneratorInterface::ABSOLUTE_URL
         );
 
-        // $unsubscribeUrlWithEmail = "{$unsubscribeUrl}?email={$contact['email']}";
+        $hashValues = $this->integration->isSupported('hashLeadId');
+        if ($hashValues) {
+            $hash = $this->hashHelper->generateUnsubscribeHash(
+                (int) $contactId,
+                $field,
+                $contact['email'] ?? ''
+            );
+
+            $unsubscribeUrl = $this->router->generate(
+                'friendly_unsubscribe_secure',
+                ['hash' => $hash, 'field' => $field, 'email' => $contact['email']],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
+        }
+
         $event->addTextHeader('List-Unsubscribe', sprintf('<%s>', $unsubscribeUrl));
 
         $tokens[$orgToken] = sprintf(

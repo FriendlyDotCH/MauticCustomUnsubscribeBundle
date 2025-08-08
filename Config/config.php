@@ -9,9 +9,18 @@ return [
     'author'      => 'Joey Keller',
     'routes'      => [
         'public' => [
+            // Secure unsubscribe with hash
+            'friendly_unsubscribe_secure' => [
+                'path'       => '/friendly-unsubscribe/secure/{email}/{hash}/{field}',
+                'controller' => 'MauticPlugin\MauticUnsubscribeBundle\Controller\UnsubscribeController::unsubscribeSecureAction',
+            ],
+            // Legacy unsubscribe with direct ID (less secure)
             'friendly_unsubscribe' => [
-                'path'       => '/friendly-unsubscribe/{id}/{field}',
-                'controller' => 'MauticPlugin\MauticUnsubscribeBundle\Controller\UnsubscribeController::unsubscribeAction',
+                'path'         => '/friendly-unsubscribe/{id}/{field}',
+                'controller'   => 'MauticPlugin\MauticUnsubscribeBundle\Controller\UnsubscribeController::unsubscribeAction',
+                'requirements' => [
+                    'id' => '\d+',
+                ],
             ],
             'friendly_hidden_link' => [
                 'path'       => '/friendly-unsubscribe/nhi/{id}',
@@ -26,6 +35,8 @@ return [
                 'arguments' => [
                     'router',
                     'monolog.logger.mautic',
+                    'mautic.friendlyunsubscribe.hash_helper',
+                    'mautic.integrations.helper',
                 ],
             ],
         ],

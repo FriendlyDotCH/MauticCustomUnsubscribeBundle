@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Mautic\CoreBundle\DependencyInjection\MauticCoreExtension;
+use MauticPlugin\MauticUnsubscribeBundle\Helper\HashHelper;
 use Symfony\Component\DependencyInjection\Loader\Configurator\ContainerConfigurator;
 
 return function (ContainerConfigurator $configurator): void {
@@ -22,4 +23,7 @@ return function (ContainerConfigurator $configurator): void {
 
     $services->set('mautic.integration.friendlyunsubscribe')
         ->class(MauticPlugin\MauticUnsubscribeBundle\Integration\FriendlyUnsubscribeIntegration::class);
+
+    $services->set('mautic.friendlyunsubscribe.hash_helper')
+        ->class(HashHelper::class);
 };
