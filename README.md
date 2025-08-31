@@ -25,6 +25,12 @@ Default text for unsubscribe is: "Abbestellen". Should you want to have a custom
 {customunsubscribe=topic_travel text="My custom unsubscribe text"}
 ```
 
+or
+
+```
+{customunsubscribe=shop text="Click here to unsubscribe" color="#008000"}
+```
+
 ## Non Human Interaction
 You can also add the {nhi} token to your email. This will generate a link, which is just a honeypot. If it's clicked within 5 seconds to the unsubscribe link, the request will be ignored.
 

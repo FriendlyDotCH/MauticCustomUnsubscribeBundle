@@ -42,7 +42,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 
     public function onEmailSend(EmailSendEvent $event)
     {
-        $config              = $this->integration?->getIntegrationConfiguration();
+        $config = $this->integration?->getIntegrationConfiguration();
         if (!$config || !$config->isPublished()) {
             return;
         }
@@ -60,7 +60,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 
         $matches = [];
         preg_match_all(
-            '/\{(?<full>customunsubscribe=(?<field>[\w_]+)(?:\s+text="(?<text>[^"]*)")?)\}/',
+            '/\{(?<full>customunsubscribe=(?<field>[\w_]+)(?:\s+text="(?<text>[^"]*)")?(?:\s+color="(?<color>[^"]*)")?)\}/',
             $content,
             $matches,
             PREG_SET_ORDER
@@ -70,6 +70,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
             'orgToken'        => '{customunsubscribe=fieldname text="Abbestellen"}',
             'field'           => null,
             'unsubscribeText' => 'Abbestellen',
+            'color'           => '#000000', // Default color if not provided
         ];
 
         // Process first match if found
@@ -81,11 +82,17 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
             if (isset($match['text']) && '' !== $match['text']) {
                 $result['unsubscribeText'] = $match['text'];
             }
+
+            if (isset($match['color']) && '' !== $match['color']) {
+                $result['color'] = $match['color'];
+            }
         }
 
         $orgToken        = $result['orgToken'];
         $field           = $result['field'];
         $unsubscribeText = $result['unsubscribeText'];
+        $color           = $result['color'];
+
         $unsubscribeUrl  = $this->router->generate(
             'friendly_unsubscribe',
             ['id' => $contactId, 'field' => $field],
@@ -109,17 +116,21 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 
         $event->addTextHeader('List-Unsubscribe', sprintf('<%s>', $unsubscribeUrl));
 
+        $style = sprintf('style="color: %s; text-decoration: underline;"', $color);
+
         $tokens[$orgToken] = sprintf(
-            '<a href="%s" mautic:disable-tracking="true">%s</a>',
+            '<a href="%s" %s mautic:disable-tracking="true">%s</a>',
             $unsubscribeUrl,
+            $style,
             $unsubscribeText
         );
 
         // Add hidden nhi link.
         $hiddenUrl  = $this->router->generate('friendly_hidden_link', ['id' => $contactId], UrlGeneratorInterface::ABSOLUTE_URL);
         $nhiLinkTag = sprintf(
-            '<a href="%s" mautic:disable-tracking="true" style="display:none;font-size:1px;color:transparent;">.</a>',
-            $hiddenUrl
+            '<a href="%s" %s mautic:disable-tracking="true" style="display:none;font-size:1px;color:transparent;">.</a>',
+            $hiddenUrl,
+            $style
         );
         $tokens['{nhi}'] = $nhiLinkTag;
 
@@ -127,6 +138,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
             'field'           => $field,
             'unsubscribeText' => $unsubscribeText,
             'unsubscribeUrl'  => $unsubscribeUrl,
+            'color'           => $color,
             'contactId'       => $contactId,
             'tokens'          => $tokens,
         ],
