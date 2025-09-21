@@ -13,13 +13,13 @@ return [
             'friendly_unsubscribe_secure' => [
                 'path'       => '/friendly-unsubscribe/secure/{email}/{hash}/{field}',
                 'controller' => 'MauticPlugin\MauticUnsubscribeBundle\Controller\UnsubscribeController::unsubscribeSecureAction',
-                'method'     => 'POST',
+                'method'     => 'GET',
             ],
             // Legacy unsubscribe with direct ID (less secure)
             'friendly_unsubscribe' => [
                 'path'         => '/friendly-unsubscribe/{id}/{field}',
                 'controller'   => 'MauticPlugin\MauticUnsubscribeBundle\Controller\UnsubscribeController::unsubscribeAction',
-                'method'     => 'POST',
+                'method'     => 'GET',
                 'requirements' => [
                     'id' => '\d+',
                 ],
