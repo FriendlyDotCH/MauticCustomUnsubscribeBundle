@@ -19,14 +19,6 @@ Once the person clicks, the value will be overwritten to DNC.
 
 **Support for custom text for unsubscribe link**
 
-Default text for unsubscribe is: "Abbestellen". Should you want to have a custom text within a tags, you should use a token as shown in the example below:
-
-```
-{customunsubscribe=topic_travel text="My custom unsubscribe text"}
-```
-
-or
-
 ```
 {customunsubscribe=shop text="Click here to unsubscribe" color="#008000"}
 ```

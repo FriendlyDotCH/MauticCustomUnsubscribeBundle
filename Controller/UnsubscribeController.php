@@ -12,6 +12,7 @@ use MauticPlugin\MauticUnsubscribeBundle\Exception\FieldNotAllowedException;
 use MauticPlugin\MauticUnsubscribeBundle\Exception\PluginNotPublishedException;
 use MauticPlugin\MauticUnsubscribeBundle\Helper\HashHelper;
 use MauticPlugin\MauticUnsubscribeBundle\Integration\FriendlyUnsubscribeIntegration;
+use MauticPlugin\MauticUnsubscribeBundle\Service\UnsubscrribeTagService;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -41,15 +42,17 @@ class UnsubscribeController extends AbstractController
         UrlGeneratorInterface $router,
         IntegrationsHelper $integrationsHelper,
         LeadModel $leadModel,
-        HashHelper $hashHelper
+        HashHelper $hashHelper,
+        UnsubscrribeTagService $unsubscrribeTagService
     ) {
-        $this->db                = $db;
-        $this->logger            = $mauticLogger;
-        $this->auditLog          = $auditLog;
-        $this->router            = $router;
-        $this->unsubSubscribeInt = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
-        $this->leadModel         = $leadModel;
-        $this->hashHelper        = $hashHelper;
+        $this->db                     = $db;
+        $this->logger                 = $mauticLogger;
+        $this->auditLog               = $auditLog;
+        $this->router                 = $router;
+        $this->unsubSubscribeInt      = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
+        $this->leadModel              = $leadModel;
+        $this->hashHelper             = $hashHelper;
+        $this->unsubscrribeTagService = $unsubscrribeTagService;
     }
 
     /**
@@ -69,6 +72,23 @@ class UnsubscribeController extends AbstractController
             return new Response('Not found', Response::HTTP_NOT_FOUND);
         }
 
+        if ($request->isMethod(Request::METHOD_HEAD)) {
+            return new Response('ok', Response::HTTP_OK);
+        }
+
+        $origin = $request->get('origin', null);
+        if (null === $origin || !in_array($origin, ['body', 'header'])) {
+            return new Response('Invalid unsubscribe link.', Response::HTTP_BAD_REQUEST);
+        }
+
+        if ('header' === $origin && !$request->isMethod(Request::METHOD_POST)) {
+            return new Response('Invalid unsubscribe link.', Response::HTTP_BAD_REQUEST);
+        } elseif ('body' === $origin && !$request->isMethod(Request::METHOD_GET)) {
+            return new Response('Invalid unsubscribe link.', Response::HTTP_BAD_REQUEST);
+        } elseif (!in_array($origin, ['body', 'header'])) {
+            return new Response('Invalid unsubscribe link.', Response::HTTP_BAD_REQUEST);
+        }
+
         $lead = $this->db->fetchAssociative(
             'SELECT id, email FROM leads WHERE email = :email',
             ['email' => $email]
@@ -80,38 +100,13 @@ class UnsubscribeController extends AbstractController
 
         $id = (int) $lead['id'];
 
-        return $this->processUnsubscribe($request, $id, $field);
-    }
-
-    /**
-     * Handle legacy unsubscribe with direct ID (less secure).
-     */
-    public function unsubscribeAction(Request $request, int $id, string $field): Response
-    {
-        $config              = $this->unsubSubscribeInt?->getIntegrationConfiguration();
-        if (!$config || !$config->isPublished()) {
-            return new Response('Not found', Response::HTTP_NOT_FOUND);
-        }
-
-        $hashValues = $this->unsubSubscribeInt->isSupported('hashLeadId');
-        $this->logger->info('hashValues: '.$hashValues);
-
-        if ($hashValues) {
-            return new Response('Not found', Response::HTTP_NOT_FOUND);
-        }
-
-        $lead = $this->db->fetchAssociative('SELECT id FROM leads WHERE id = ?', [$id]);
-        if (!$lead) {
-            return new Response('Lead not found.', Response::HTTP_NOT_FOUND);
-        }
-
-        return $this->processUnsubscribe($request, $id, $field);
+        return $this->processUnsubscribe($request, $id, $field, $origin);
     }
 
     /**
      * Common unsubscribe processing logic.
      */
-    private function processUnsubscribe(Request $request, int $id, string $field): Response
+    private function processUnsubscribe(Request $request, int $id, string $field, string $origin): Response
     {
         try {
             $this->logger->info('Friendly unsubscribeAction');
@@ -156,6 +151,7 @@ class UnsubscribeController extends AbstractController
 
             // ✅ Dynamically update the custom field
             $this->db->executeUpdate("UPDATE leads SET $field = 'DNC' WHERE id = ?", [$id]);
+            $this->unsubscrribeTagService->addTag($id, $origin);
 
             // Log event
             $this->auditLog->writeToLog([

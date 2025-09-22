@@ -26,4 +26,7 @@ return function (ContainerConfigurator $configurator): void {
 
     $services->set('mautic.friendlyunsubscribe.hash_helper')
         ->class(HashHelper::class);
+
+    $services->set('mautic.friendlyunsubscribe.unsubscribe_link_service')
+        ->class(MauticPlugin\MauticUnsubscribeBundle\Service\UnsubscribeLinkService::class);
 };
