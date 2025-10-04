@@ -150,7 +150,10 @@ class UnsubscribeController extends AbstractController
             $session->remove("redirect_click_$id");
 
             // ✅ Dynamically update the custom field
-            $this->db->executeUpdate("UPDATE leads SET $field = 'DNC' WHERE id = ?", [$id]);
+
+            $lead = $this->leadModel->getEntity($id);
+            $lead->addUpdatedField($field, 'DNC');
+            $this->leadModel->saveEntity($lead);
             $this->unsubscrribeTagService->addTag($id, $origin);
 
             // Log event
