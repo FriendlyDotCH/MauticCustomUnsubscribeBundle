@@ -19,6 +19,7 @@ use Mautic\EmailBundle\Helper\Exception\OwnerNotFoundException;
 use Mautic\EmailBundle\Helper\FromEmailHelper;
 use Mautic\EmailBundle\Helper\MailHashHelper;
 use Mautic\EmailBundle\Helper\MailHelper as CoreMailHelper;
+use Mautic\EmailBundle\Helper\PlainTextHelper;
 use Mautic\EmailBundle\Mailer\Exception\BatchQueueMaxException;
 use Mautic\EmailBundle\Mailer\Message\MauticMessage;
 use Mautic\EmailBundle\Mailer\Transport\TokenTransportInterface;

@@ -86,6 +86,8 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
             if (isset($match['color']) && '' !== $match['color']) {
                 $result['color'] = $match['color'];
             }
+        } else {
+            return;
         }
 
         $orgToken        = $result['orgToken'];
