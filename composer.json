@@ -1,16 +1,24 @@
 {
-    "name": "mautic/plugin-unsubscribe",
+    "name": "friendlydotch/mautic-custom-unsubscribe-bundle",
     "type": "mautic-plugin",
     "description": "Plugin for handling unsubscribe actions via a nice URL",
+    "version": "1.0.0",
+    "license": "MIT",
     "authors": [
         {
             "name": "Joey Keller",
             "email": "me@joeykeller.com"
         }
     ],
-    "autoload": {
-        "psr-4": {
-            "MauticPlugin\\MauticUnsubscribeBundle\\": "."
+    "keywords": ["mautic","plugin","integration"],
+    "require": {
+        "php": ">=8.1.0 <8.4",
+        "mautic/core-lib": "^5.0"
+    },
+    "extra": {
+        "install-directory-name": "MauticUnsubscribeBundle",
+        "branch-alias": {
+            "dev-dev_mautic5": "5.x-dev"
         }
     }
 }
