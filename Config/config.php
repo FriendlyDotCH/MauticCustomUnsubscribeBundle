@@ -18,6 +18,11 @@ return [
             'friendly_hidden_link' => [
                 'path'       => '/friendly-unsubscribe/nhi/{id}',
                 'controller' => 'MauticPlugin\MauticUnsubscribeBundle\Controller\HiddenLinkController::trackRedirectAction',
+                'method'     => 'GET|POST',
+                'arguments'  => [
+                    'mautic.lead.model.lead',
+                    'mautic.friendlyunsubscribe.hash_helper',
+                ],
             ],
         ],
     ],

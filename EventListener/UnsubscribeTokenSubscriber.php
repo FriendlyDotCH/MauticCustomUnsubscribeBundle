@@ -56,6 +56,8 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         }
 
         $content   = $event->getContent();
+
+        $this->logger->debug('UnsubscribeTokenSubscriber->onEmailSend', ['content' => $content]);
         $contactId = $contact['id'];
         $tokens    = [];
         $result    = [

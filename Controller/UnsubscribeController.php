@@ -136,7 +136,7 @@ class UnsubscribeController extends AbstractController
             // Delay processing by 3 seconds
             sleep(3);
 
-            // Check if {nhi} tracking link was clicked within expiry time (10 sec)
+            // Check if {nhi} tracking link was clicked within expiry time
             $lastRedirectClick = $session->get("redirect_click_$id");
 
             if ($lastRedirectClick && (time() - $lastRedirectClick <= $expireTime)) {
