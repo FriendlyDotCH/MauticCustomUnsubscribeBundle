@@ -11,7 +11,7 @@ class UnsubscrribeTagService
 {
     public function __construct(
         private TagModel $tagModel,
-        private LeadModel $leadModel
+        private LeadModel $leadModel,
     ) {
     }
 

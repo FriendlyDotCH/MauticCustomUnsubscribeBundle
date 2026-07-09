@@ -21,37 +21,19 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class UnsubscribeController extends AbstractController
 {
-    private $db;
-
-    private $logger;
-
-    private $auditLog;
-
-    private $router;
-
     private $unsubSubscribeInt;
 
-    private $leadModel;
-
-    private $hashHelper;
-
     public function __construct(
-        Connection $db,
-        LoggerInterface $mauticLogger,
-        AuditLogModel $auditLog,
+        private Connection $db,
+        private LoggerInterface $logger,
+        private AuditLogModel $auditLog,
         UrlGeneratorInterface $router,
         IntegrationsHelper $integrationsHelper,
-        LeadModel $leadModel,
-        HashHelper $hashHelper,
-        UnsubscrribeTagService $unsubscrribeTagService
+        private LeadModel $leadModel,
+        private HashHelper $hashHelper,
+        UnsubscrribeTagService $unsubscrribeTagService,
     ) {
-        $this->db                     = $db;
-        $this->logger                 = $mauticLogger;
-        $this->auditLog               = $auditLog;
-        $this->router                 = $router;
         $this->unsubSubscribeInt      = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
-        $this->leadModel              = $leadModel;
-        $this->hashHelper             = $hashHelper;
         $this->unsubscrribeTagService = $unsubscrribeTagService;
     }
 
@@ -121,7 +103,7 @@ class UnsubscribeController extends AbstractController
             $expireTime         = $decryptedApiKeys['nhi'];
             $allowedFields      = explode(',', $decryptedApiKeys['fields']);
 
-            if (count($allowedFields) > 0 && !in_array($field, $allowedFields)) {
+            if (!in_array($field, $allowedFields)) {
                 throw new FieldNotAllowedException('Field not allowed to be used as unsubscribe.');
             }
 

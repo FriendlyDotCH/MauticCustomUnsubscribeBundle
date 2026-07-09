@@ -14,24 +14,16 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 {
-    private $router;
-    private $logger;
-    private $hashHelper;
     private $integration;
-    private $unsubscribeLinkService;
 
     public function __construct(
         UrlGeneratorInterface $router,
-        LoggerInterface $logger,
-        HashHelper $hashHelper,
+        private LoggerInterface $logger,
+        private HashHelper $hashHelper,
         IntegrationsHelper $integrationsHelper,
-        UnsubscribeLinkService $unsubscribeLinkService,
+        private UnsubscribeLinkService $unsubscribeLinkService,
     ) {
-        $this->router                 = $router;
-        $this->logger                 = $logger;
-        $this->hashHelper             = $hashHelper;
         $this->integration            = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
-        $this->unsubscribeLinkService = $unsubscribeLinkService;
     }
 
     public static function getSubscribedEvents(): array

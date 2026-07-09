@@ -4,13 +4,11 @@ declare(strict_types=1);
 
 namespace MauticPlugin\MauticUnsubscribeBundle\Service;
 
-use Mautic\LeadBundle\Model\LeadModel;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class UnsubscribeLinkService
 {
     public function __construct(
-        private LeadModel $leadModel,
         private UrlGeneratorInterface $router,
     ) {
     }
@@ -22,9 +20,9 @@ class UnsubscribeLinkService
         int $contactId,
         string $field,
         ?string $email = null,
-        ?string $hash = null
+        ?string $hash = null,
     ): string {
-        return $this->generateUnsubscribeUrl($contactId, $field, $email, $hash, 'body');
+        return $this->generateUnsubscribeUrl($field, $email, $hash, 'body');
     }
 
     /**
@@ -35,9 +33,9 @@ class UnsubscribeLinkService
         int $contactId,
         string $field,
         ?string $email = null,
-        ?string $hash = null
+        ?string $hash = null,
     ): string {
-        $url = $this->generateUnsubscribeUrl($contactId, $field, $email, $hash, 'header');
+        $url = $this->generateUnsubscribeUrl($field, $email, $hash, 'header');
 
         return "<{$url}>";
     }
@@ -58,11 +56,10 @@ class UnsubscribeLinkService
      * Centralized URL generation logic.
      */
     private function generateUnsubscribeUrl(
-        int $contactId,
         string $field,
         ?string $email = null,
         ?string $hash = null,
-        ?string $origin = null
+        ?string $origin = null,
     ): string {
         if (null === $hash || null === $email) {
             return '';

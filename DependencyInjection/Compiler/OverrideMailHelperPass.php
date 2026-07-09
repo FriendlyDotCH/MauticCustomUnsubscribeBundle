@@ -11,11 +11,11 @@ class OverrideMailHelperPass implements CompilerPassInterface
 {
     public function process(ContainerBuilder $container): void
     {
-        if (!$container->hasDefinition('Mautic\EmailBundle\Helper\MailHelper')) {
+        if (!$container->hasDefinition(\Mautic\EmailBundle\Helper\MailHelper::class)) {
             return;
         }
 
-        $definition = $container->getDefinition('Mautic\EmailBundle\Helper\MailHelper');
-        $definition->setClass('MauticPlugin\MauticUnsubscribeBundle\Helper\MailHelper');
+        $definition = $container->getDefinition(\Mautic\EmailBundle\Helper\MailHelper::class);
+        $definition->setClass(\MauticPlugin\MauticUnsubscribeBundle\Helper\MailHelper::class);
     }
 }

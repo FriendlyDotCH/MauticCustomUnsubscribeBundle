@@ -5,7 +5,7 @@ declare(strict_types=1);
 return [
     'name'        => 'Unsubscribe Plugin',
     'description' => 'Allows contacts to unsubscribe via a simple URL.',
-    'version'     => '2.0.0',
+    'version'     => '7.0.1',
     'author'      => 'Joey Keller',
     'routes'      => [
         'public' => [

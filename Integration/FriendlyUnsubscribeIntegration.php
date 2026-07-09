@@ -11,7 +11,6 @@ use Mautic\IntegrationsBundle\Integration\Interfaces\ConfigFormAuthInterface;
 use Mautic\IntegrationsBundle\Integration\Interfaces\ConfigFormFeaturesInterface;
 use Mautic\IntegrationsBundle\Integration\Interfaces\ConfigFormInterface;
 use Mautic\IntegrationsBundle\Integration\Interfaces\IntegrationInterface;
-use Mautic\PluginBundle\Entity\IntegrationRepository;
 use MauticPlugin\MauticUnsubscribeBundle\Form\Type\ConfigType;
 
 class FriendlyUnsubscribeIntegration extends BasicIntegration implements BasicInterface, ConfigFormInterface, IntegrationInterface, ConfigFormFeaturesInterface, BuilderInterface, ConfigFormAuthInterface
@@ -20,14 +19,8 @@ class FriendlyUnsubscribeIntegration extends BasicIntegration implements BasicIn
     use DefaultConfigFormTrait;
 
     public const NAME         = 'friendlyunsubscribe';
-    public const DISPLAY_NAME = 'Friendly Unsubscribe Integration';
+    public const DISPLAY_NAME = 'Friendly Unsubscribe Plugin';
     public const DB_NAME      = 'FriendlyUnsubscribe';
-
-    public function __construct(
-        private IntegrationRepository $integrationRepo
-    ) {
-        $this->integration = $this->integrationRepo->findOneByName(self::DB_NAME);
-    }
 
     public function getName(): string
     {
