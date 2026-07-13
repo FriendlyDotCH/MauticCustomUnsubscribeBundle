@@ -17,24 +17,23 @@ use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class UnsubscribeController extends AbstractController
 {
-    private $unsubSubscribeInt;
+    private FriendlyUnsubscribeIntegration $unsubSubscribeInt;
 
     public function __construct(
         private Connection $db,
         private LoggerInterface $logger,
         private AuditLogModel $auditLog,
-        UrlGeneratorInterface $router,
         IntegrationsHelper $integrationsHelper,
         private LeadModel $leadModel,
         private HashHelper $hashHelper,
-        UnsubscrribeTagService $unsubscrribeTagService,
+        private UnsubscrribeTagService $unsubscrribeTagService,
     ) {
-        $this->unsubSubscribeInt      = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
-        $this->unsubscrribeTagService = $unsubscrribeTagService;
+        $unsubSubscribeInt = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
+        \assert($unsubSubscribeInt instanceof FriendlyUnsubscribeIntegration);
+        $this->unsubSubscribeInt = $unsubSubscribeInt;
     }
 
     /**
@@ -42,8 +41,8 @@ class UnsubscribeController extends AbstractController
      */
     public function unsubscribeSecureAction(Request $request, string $email, string $hash, string $field): Response
     {
-        $config              = $this->unsubSubscribeInt?->getIntegrationConfiguration();
-        if (!$config || !$config->isPublished()) {
+        $config              = $this->unsubSubscribeInt->getIntegrationConfiguration();
+        if (!$config->isPublished()) {
             return new Response('Not found', Response::HTTP_NOT_FOUND);
         }
 
@@ -92,9 +91,9 @@ class UnsubscribeController extends AbstractController
     {
         try {
             $this->logger->info('Friendly unsubscribeAction');
-            $configuration = $this->unsubSubscribeInt?->getIntegrationConfiguration();
+            $configuration = $this->unsubSubscribeInt->getIntegrationConfiguration();
 
-            $isPublished = $configuration?->isPublished();
+            $isPublished = $configuration->isPublished();
             if (!$isPublished) {
                 throw new PluginNotPublishedException('Plugin is not published.');
             }

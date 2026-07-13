@@ -94,14 +94,14 @@ class MailHelper extends CoreMailHelper
     protected $returnPath;
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     protected $errors = [];
 
     /**
-     * @var array|Lead
+     * @var array<string, mixed>|Lead|null
      */
-    protected $lead;
+    protected $lead; // @phpstan-ignore property.phpDocType (parent property type omits null but null is assigned in reset())
 
     /**
      * @var bool
@@ -121,7 +121,7 @@ class MailHelper extends CoreMailHelper
     protected $appendTrackingPixel = false;
 
     /**
-     * @var array
+     * @var array<int|string, mixed>
      */
     protected $source = [];
 
@@ -133,12 +133,12 @@ class MailHelper extends CoreMailHelper
     protected ?string $emailType = null;
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     protected $globalTokens = [];
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     protected $eventTokens = [];
 
@@ -155,12 +155,12 @@ class MailHelper extends CoreMailHelper
     protected $queueEnabled = false;
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     protected $queuedRecipients = [];
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     public $metadata = [];
 
@@ -182,27 +182,27 @@ class MailHelper extends CoreMailHelper
     protected $plainTextSet = false;
 
     /**
-     * @var array
+     * @var array<int|string, mixed>
      */
     protected $assets = [];
 
     /**
-     * @var array
+     * @var array<int|string, mixed>
      */
     protected $attachedAssets = [];
 
     /**
-     * @var array
+     * @var array<int|string, mixed>
      */
     protected $assetStats = [];
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     protected $headers = [];
 
     /**
-     * @var array
+     * @var array<string, mixed>
      */
     protected $body = self::DEFAULT_BODY;
 
@@ -214,7 +214,7 @@ class MailHelper extends CoreMailHelper
     /**
      * Cache for lead owners.
      *
-     * @var array
+     * @var array<int, mixed>
      */
     protected static $leadOwners = [];
 
@@ -230,8 +230,14 @@ class MailHelper extends CoreMailHelper
      */
     private ?string $contentHash = null;
 
+    /**
+     * @var array<int|string, mixed>
+     */
     private array $copies = [];
 
+    /**
+     * @var array<string, string>
+     */
     private array $embedImagesReplaces = [];
 
     public function __construct(
@@ -444,7 +450,7 @@ class MailHelper extends CoreMailHelper
      *                                  NOTHING_IF_FAILED  leaves the current errors array MauticMessage instance intact if it fails, otherwise reset_to
      *                                  RETURN_ERROR       return an array of [success, $errors]; only one applicable if message is queued
      *
-     * @return bool|array
+     * @return bool|array<int, bool|array<string, mixed>>
      */
     public function queue($dispatchSendEvent = false, $returnMode = self::QUEUE_RESET_TO)
     {
@@ -476,7 +482,7 @@ class MailHelper extends CoreMailHelper
             $this->queuedRecipients = [];
 
             // Assume success
-            return (self::QUEUE_RETURN_ERRORS) ? [true, []] : true;
+            return [true, []];
         }
         $success = $this->send($dispatchSendEvent);
 
@@ -520,7 +526,7 @@ class MailHelper extends CoreMailHelper
     /**
      * Send batched mail to mailer.
      *
-     * @param array $resetEmailTypes Array of email types to clear after flusing the queue
+     * @param array<int, string> $resetEmailTypes Array of email types to clear after flusing the queue
      *
      * @return bool
      */
@@ -632,8 +638,8 @@ class MailHelper extends CoreMailHelper
      * Search and replace tokens
      * Adapted from \Swift_Plugins_DecoratorPlugin.
      *
-     * @param array $search
-     * @param array $replace
+     * @param array<int|string, string> $search
+     * @param array<int|string, string> $replace
      */
     public static function searchReplaceTokens($search, $replace, MauticMessage &$message): void
     {
@@ -720,9 +726,10 @@ class MailHelper extends CoreMailHelper
     /**
      * Use a template as the body.
      *
-     * @param string $template
-     * @param array  $vars
-     * @param bool   $returnContent
+     * @param string               $template
+     * @param array<string, mixed> $vars
+     * @param bool                 $returnContent
+     * @param string|null          $charset
      *
      * @return void|string
      */
@@ -740,6 +747,9 @@ class MailHelper extends CoreMailHelper
         unset($content);
     }
 
+    /**
+     * @param string $subject
+     */
     public function setSubject($subject): void
     {
         $this->subject = $subject;
@@ -755,6 +765,8 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Set a plain text part.
+     *
+     * @param string $content
      */
     public function setPlainText($content): void
     {
@@ -775,7 +787,7 @@ class MailHelper extends CoreMailHelper
     /**
      * Set plain text for $this->message, replacing if necessary.
      */
-    protected function setMessagePlainText()
+    protected function setMessagePlainText(): void
     {
         if ($this->tokenizationEnabled && $this->plainTextSet) {
             // No need to find and replace since tokenization happens at the transport level
@@ -787,8 +799,10 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * @param string $contentType
-     * @param bool   $ignoreTrackingPixel
+     * @param string      $content
+     * @param string      $contentType
+     * @param string|null $charset
+     * @param bool        $ignoreTrackingPixel
      */
     public function setBody($content, $contentType = 'text/html', $charset = null, $ignoreTrackingPixel = false): void
     {
@@ -870,6 +884,9 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Set to address(es).
+     *
+     * @param string|array<int|string, string|null> $addresses
+     * @param string|null                           $name
      */
     public function setTo($addresses, $name = null): bool
     {
@@ -1041,7 +1058,7 @@ class MailHelper extends CoreMailHelper
      *
      * @throws BatchQueueMaxException
      */
-    protected function checkBatchMaxRecipients($toBeAdded = 1, $type = 'to')
+    protected function checkBatchMaxRecipients($toBeAdded = 1, $type = 'to'): void
     {
         if ($this->queueEnabled && $this->transport instanceof TokenTransportInterface) {
             // Check if max batching has been hit
@@ -1102,8 +1119,8 @@ class MailHelper extends CoreMailHelper
     /**
      * Sets FROM for the mailer which can overwrite the system default.
      *
-     * @param string|array $fromEmail
-     * @param string       $fromName
+     * @param string|array<string, string|null> $fromEmail
+     * @param string|null                       $fromName
      */
     public function setFrom($fromEmail, $fromName = null): void
     {
@@ -1156,7 +1173,7 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * @return array|Lead
+     * @return array<string, mixed>|Lead|null
      */
     public function getLead()
     {
@@ -1164,7 +1181,8 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * @param array|Lead $lead
+     * @param array<string, mixed>|Lead $lead
+     * @param bool                      $interalSend
      */
     public function setLead($lead, $interalSend = false): void
     {
@@ -1183,7 +1201,7 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * @return array
+     * @return array<int|string, mixed>
      */
     public function getSource()
     {
@@ -1191,7 +1209,7 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * @param array $source
+     * @param array<int|string, mixed> $source
      */
     public function setSource($source): void
     {
@@ -1217,9 +1235,9 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * @param bool  $allowBcc            Honor BCC if set in email
-     * @param array $assetAttachments    Assets to send
-     * @param bool  $ignoreTrackingPixel Do not append tracking pixel HTML
+     * @param bool                     $allowBcc            Honor BCC if set in email
+     * @param array<int|string, mixed> $assetAttachments    Assets to send
+     * @param bool                     $ignoreTrackingPixel Do not append tracking pixel HTML
      *
      * @return bool Returns false if there were errors with the email configuration
      */
@@ -1297,7 +1315,8 @@ class MailHelper extends CoreMailHelper
     /**
      * Set custom headers.
      *
-     * @param bool $merge
+     * @param array<string, mixed> $headers
+     * @param bool                 $merge
      */
     public function setCustomHeaders(array $headers, $merge = true): void
     {
@@ -1310,11 +1329,18 @@ class MailHelper extends CoreMailHelper
         $this->headers = $headers;
     }
 
+    /**
+     * @param string $name
+     * @param mixed  $value
+     */
     public function addCustomHeader($name, $value): void
     {
         $this->headers[$name] = $value;
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function getCustomHeaders(): array
     {
         $headers = array_merge($this->headers, $this->getSystemHeaders());
@@ -1375,12 +1401,17 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Append tokens.
+     *
+     * @param array<string, mixed> $tokens
      */
     public function addTokens(array $tokens): void
     {
         $this->globalTokens = array_merge($this->globalTokens, $tokens);
     }
 
+    /**
+     * @param array<string, mixed> $tokens
+     */
     public function setTokens(array $tokens): void
     {
         $this->globalTokens = $tokens;
@@ -1410,7 +1441,7 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * @return array
+     * @return array<string, mixed>
      */
     public function getGlobalTokens()
     {
@@ -1486,8 +1517,11 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Log exception.
+     *
+     * @param \Throwable|string $error
+     * @param string|null       $context
      */
-    protected function logError($error, $context = null)
+    protected function logError($error, $context = null): void
     {
         if ($error instanceof \Exception) {
             $exceptionContext = ['exception' => $error];
@@ -1521,7 +1555,7 @@ class MailHelper extends CoreMailHelper
      *
      * @param bool $reset Resets the error array in preparation for the next mail send or else it'll fail
      *
-     * @return array
+     * @return array<string, mixed>
      */
     public function getErrors($reset = true)
     {
@@ -1563,7 +1597,7 @@ class MailHelper extends CoreMailHelper
     /**
      * Creates a download stat for the asset.
      */
-    protected function createAssetDownloadEntries()
+    protected function createAssetDownloadEntries(): void
     {
         // Nothing was sent out so bail
         if ($this->fatal || empty($this->assetStats)) {
@@ -1599,8 +1633,11 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Queues the details to note if a lead received an asset if no errors are generated.
+     *
+     * @param string|null               $contactEmail
+     * @param array<string, mixed>|null $metadata
      */
-    protected function queueAssetDownloadEntry($contactEmail = null, ?array $metadata = null)
+    protected function queueAssetDownloadEntry($contactEmail = null, ?array $metadata = null): void
     {
         if ($this->internalSend || empty($this->assets)) {
             return;
@@ -1640,6 +1677,8 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
+     * @param string $url
+     *
      * @return \Mautic\PageBundle\Entity\Redirect|object|null
      */
     public function getTrackableLink($url)
@@ -1664,6 +1703,7 @@ class MailHelper extends CoreMailHelper
      *
      * @param bool|true   $persist
      * @param string|null $emailAddress
+     * @param int|null    $listId
      */
     public function createEmailStat($persist = true, $emailAddress = null, $listId = null): Stat
     {
@@ -1756,7 +1796,10 @@ class MailHelper extends CoreMailHelper
     /**
      * Check to see if a monitored email box is enabled and configured.
      *
-     * @return bool|array
+     * @param string $bundleKey
+     * @param string $folderKey
+     *
+     * @return bool|array<string, mixed>
      */
     public function isMontoringEnabled($bundleKey, $folderKey)
     {
@@ -1769,6 +1812,8 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Generate bounce email for the lead.
+     *
+     * @param string|null $idHash
      *
      * @return bool|string
      */
@@ -1792,6 +1837,8 @@ class MailHelper extends CoreMailHelper
     /**
      * Generate an unsubscribe email for the lead.
      *
+     * @param string|null $idHash
+     *
      * @return bool|string
      */
     public function generateUnsubscribeEmail($idHash = null)
@@ -1813,6 +1860,8 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Clean the name - if empty, set as null to ensure pretty headers.
+     *
+     * @param string|null $name
      *
      * @return string|null
      */
@@ -1898,6 +1947,12 @@ class MailHelper extends CoreMailHelper
         }
     }
 
+    /**
+     * @param string|null          $name
+     * @param array<string, mixed> $tokens
+     *
+     * @return array<string, mixed>
+     */
     private function buildMetadata($name, array $tokens): array
     {
         return [
@@ -1918,6 +1973,8 @@ class MailHelper extends CoreMailHelper
      *
      * @deprecated 2.11.0 to be removed in 3.0; use Mautic\EmailBundle\Helper\EmailValidator
      *
+     * @param string $address
+     *
      * @throws InvalidEmailException
      */
     public static function validateEmail($address): void
@@ -1931,6 +1988,9 @@ class MailHelper extends CoreMailHelper
         }
     }
 
+    /**
+     * @param string|array<string, string|null>|false $overrideFrom
+     */
     private function setDefaultFrom($overrideFrom, AddressDTO $systemFrom): void
     {
         if (is_array($overrideFrom)) {
@@ -1945,6 +2005,9 @@ class MailHelper extends CoreMailHelper
         $this->from       = $this->systemFrom;
     }
 
+    /**
+     * @param string|null $systemReplyToEmail
+     */
     private function setDefaultReplyTo($systemReplyToEmail = null, ?AddressDTO $systemFromEmail = null): void
     {
         $fromEmail = null;
@@ -2023,7 +2086,9 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * @return bool|array
+     * @param array<string, mixed>|mixed $contact
+     *
+     * @return bool|array<string, mixed>
      *
      * @deprecated
      */
@@ -2051,6 +2116,8 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
+     * @param array<string, mixed> $owner
+     *
      * @deprecated; use FromEmailHelper::getUserSignature
      */
     protected function getContactOwnerSignature($owner): string

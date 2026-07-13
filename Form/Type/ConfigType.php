@@ -37,7 +37,7 @@ class ConfigType extends AbstractType
                 'attr'        => ['class' => 'form-control'],
                 'data'        => $config['nhi'] ?? 3,
                 'constraints' => [
-                    new Type(['type' => 'integer']),
+                    new Type('integer'),
                     new NotBlank(),
                     new GreaterThanOrEqual(['value' => 1]),
                 ],

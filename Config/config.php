@@ -31,7 +31,6 @@ return [
             'mautic.unsubscribe_token_subscriber' => [
                 'class'     => MauticPlugin\MauticUnsubscribeBundle\EventListener\UnsubscribeTokenSubscriber::class,
                 'arguments' => [
-                    'router',
                     'monolog.logger.mautic',
                     'mautic.friendlyunsubscribe.hash_helper',
                     'mautic.integrations.helper',

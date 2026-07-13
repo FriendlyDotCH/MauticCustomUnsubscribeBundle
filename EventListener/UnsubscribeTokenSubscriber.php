@@ -10,20 +10,20 @@ use MauticPlugin\MauticUnsubscribeBundle\Integration\FriendlyUnsubscribeIntegrat
 use MauticPlugin\MauticUnsubscribeBundle\Service\UnsubscribeLinkService;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 
 class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 {
-    private $integration;
+    private FriendlyUnsubscribeIntegration $integration;
 
     public function __construct(
-        UrlGeneratorInterface $router,
         private LoggerInterface $logger,
         private HashHelper $hashHelper,
         IntegrationsHelper $integrationsHelper,
         private UnsubscribeLinkService $unsubscribeLinkService,
     ) {
-        $this->integration            = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
+        $integration = $integrationsHelper->getIntegration(FriendlyUnsubscribeIntegration::NAME);
+        \assert($integration instanceof FriendlyUnsubscribeIntegration);
+        $this->integration = $integration;
     }
 
     public static function getSubscribedEvents(): array
@@ -35,8 +35,8 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
 
     public function onEmailSend(EmailSendEvent $event): void
     {
-        $config = $this->integration?->getIntegrationConfiguration();
-        if (!$config || !$config->isPublished()) {
+        $config = $this->integration->getIntegrationConfiguration();
+        if (!$config->isPublished()) {
             return;
         }
 
@@ -72,7 +72,7 @@ class UnsubscribeTokenSubscriber implements EventSubscriberInterface
         if (!empty($matches[0])) {
             $match              = $matches[0];
             $result['orgToken'] = '{'.$match['full'].'}';
-            $result['field']    = $match['field'] ?? null;
+            $result['field']    = $match['field'];
 
             if (isset($match['text']) && '' !== $match['text']) {
                 $result['unsubscribeText'] = $match['text'];

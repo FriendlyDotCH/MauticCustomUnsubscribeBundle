@@ -8,12 +8,12 @@ use Mautic\CoreBundle\Helper\CoreParametersHelper;
 
 class HashHelper
 {
-    private $secretKey;
+    private string $secretKey;
 
     public function __construct(CoreParametersHelper $coreParametersHelper)
     {
         // Use the same secret key that Mautic uses for security
-        $this->secretKey = $coreParametersHelper->get('secret_key');
+        $this->secretKey = (string) $coreParametersHelper->get('secret_key');
     }
 
     /**
