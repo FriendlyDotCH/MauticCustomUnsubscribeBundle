@@ -21,7 +21,7 @@ class HiddenLinkController extends AbstractController
         $timestamp = time();
 
         // Store the timestamp in session
-        $session->set("redirect_click_$id", $timestamp);
+        $session->set("redirect_click_{$id}", $timestamp);
 
         return new Response('ok', Response::HTTP_OK);
     }

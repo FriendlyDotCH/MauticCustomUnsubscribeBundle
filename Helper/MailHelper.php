@@ -286,7 +286,7 @@ class MailHelper extends CoreMailHelper
      *
      * @return $this
      */
-    public function getMailer($cleanSlate = true)
+    public function getMailer($cleanSlate = true): static
     {
         $this->reset($cleanSlate);
 
@@ -733,7 +733,7 @@ class MailHelper extends CoreMailHelper
      *
      * @return void|string
      */
-    public function setTemplate($template, $vars = [], $returnContent = false, $charset = null)
+    public function setTemplate($template, array $vars = [], $returnContent = false, $charset = null): ?string
     {
         $content = $this->twig->render($template, $vars);
 
@@ -874,10 +874,8 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Return the content identifier.
-     *
-     * @return string
      */
-    public function getContentHash()
+    public function getContentHash(): ?string
     {
         return $this->contentHash;
     }
@@ -1144,10 +1142,7 @@ class MailHelper extends CoreMailHelper
         }
     }
 
-    /**
-     * @return string|null
-     */
-    public function getIdHash()
+    public function getIdHash(): ?string
     {
         return $this->idHash;
     }
@@ -1313,8 +1308,6 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * Set custom headers.
-     *
      * @param array<string, mixed> $headers
      * @param bool                 $merge
      */
@@ -1389,7 +1382,7 @@ class MailHelper extends CoreMailHelper
                 );
             }
 
-            return "<$url>";
+            return "<{$url}>";
         }
 
         if (!empty($this->queuedRecipients) || !empty($this->lead)) {
@@ -1538,7 +1531,7 @@ class MailHelper extends CoreMailHelper
         }
 
         if ($context) {
-            $error .= " ($context)";
+            $error .= " ({$context})";
 
             if ('send' === $context) {
                 $error .= '; '.implode(', ', $this->errors['failures']);
@@ -1668,10 +1661,8 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Returns if the mailer supports and is in tokenization mode.
-     *
-     * @return bool
      */
-    public function inTokenizationMode()
+    public function inTokenizationMode(): bool
     {
         return $this->tokenizationEnabled;
     }
@@ -1699,8 +1690,6 @@ class MailHelper extends CoreMailHelper
     }
 
     /**
-     * Create an email stat.
-     *
      * @param bool|true   $persist
      * @param string|null $emailAddress
      * @param int|null    $listId
@@ -1817,7 +1806,7 @@ class MailHelper extends CoreMailHelper
      *
      * @return bool|string
      */
-    public function generateBounceEmail($idHash = null)
+    public function generateBounceEmail($idHash = null): string|false
     {
         $monitoredEmail = false;
 
@@ -1841,7 +1830,7 @@ class MailHelper extends CoreMailHelper
      *
      * @return bool|string
      */
-    public function generateUnsubscribeEmail($idHash = null)
+    public function generateUnsubscribeEmail($idHash = null): string|false
     {
         $monitoredEmail = false;
 
@@ -1860,12 +1849,8 @@ class MailHelper extends CoreMailHelper
 
     /**
      * Clean the name - if empty, set as null to ensure pretty headers.
-     *
-     * @param string|null $name
-     *
-     * @return string|null
      */
-    protected function cleanName($name)
+    protected function cleanName(?string $name): ?string
     {
         if (null === $name) {
             return $name;

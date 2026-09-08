@@ -64,9 +64,11 @@ class UnsubscribeController extends AbstractController
 
         if ('header' === $origin && !$request->isMethod(Request::METHOD_POST)) {
             return new Response('Invalid unsubscribe link.', Response::HTTP_BAD_REQUEST);
-        } elseif ('body' === $origin && !$request->isMethod(Request::METHOD_GET)) {
+        }
+        if ('body' === $origin && !$request->isMethod(Request::METHOD_GET)) {
             return new Response('Invalid unsubscribe link.', Response::HTTP_BAD_REQUEST);
-        } elseif (!in_array($origin, ['body', 'header'])) {
+        }
+        if (!in_array($origin, ['body', 'header'])) {
             return new Response('Invalid unsubscribe link.', Response::HTTP_BAD_REQUEST);
         }
 
@@ -111,24 +113,24 @@ class UnsubscribeController extends AbstractController
             $timestamp = time();
 
             // Store the unsubscribe request temporarily
-            $session->set("pending_unsubscribe_$id", $timestamp);
-            $this->logger->debug("Unsubscribe request stored temporarily for Lead ID: $id.");
+            $session->set("pending_unsubscribe_{$id}", $timestamp);
+            $this->logger->debug("Unsubscribe request stored temporarily for Lead ID: {$id}.");
 
             // Delay processing by 3 seconds
             sleep(3);
 
             // Check if {nhi} tracking link was clicked within expiry time
-            $lastRedirectClick = $session->get("redirect_click_$id");
+            $lastRedirectClick = $session->get("redirect_click_{$id}");
 
             if ($lastRedirectClick && (time() - $lastRedirectClick <= $expireTime)) {
-                $this->logger->warning("Unsubscribe request ignored for Lead ID $id (NHI Clicked in last $expireTime sec).");
-                $session->remove("redirect_click_$id");
+                $this->logger->warning("Unsubscribe request ignored for Lead ID {$id} (NHI Clicked in last {$expireTime} sec).");
+                $session->remove("redirect_click_{$id}");
 
                 return new Response('Unsubscribe request ignored.', Response::HTTP_OK);
             }
 
             // ✅ Remove {nhi} session after expiry
-            $session->remove("redirect_click_$id");
+            $session->remove("redirect_click_{$id}");
 
             // ✅ Dynamically update the custom field
 
@@ -146,7 +148,7 @@ class UnsubscribeController extends AbstractController
                 'details'   => ['Updated '.$field => 'DNC'],
             ]);
 
-            $this->logger->info("Successfully unsubscribed Lead ID: $id (Field: $field)");
+            $this->logger->info("Successfully unsubscribed Lead ID: {$id} (Field: {$field})");
 
             // Redirect to the corresponding landing page
             return $this->redirect('/'.$field);
@@ -155,7 +157,7 @@ class UnsubscribeController extends AbstractController
         } catch (FieldNotAllowedException $e) {
             return new Response('Error: '.$e->getMessage(), Response::HTTP_BAD_REQUEST);
         } catch (\Exception $e) {
-            $this->logger->error("Error updating lead ID $id: ".$e->getMessage());
+            $this->logger->error("Error updating lead ID {$id}: ".$e->getMessage());
 
             return new Response('Error: '.$e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
